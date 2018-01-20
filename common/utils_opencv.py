@@ -1,7 +1,50 @@
 import cv2
 import numpy as np
+from threading import Thread
+from Queue import Queue
 
 cv2_version = cv2.__version__.split('.')[0]
+
+class VideoStream(object):
+    def __init__(self, url, queueSize=4):
+        self.stream = cv2.VideoCapture(url)
+        self.stopped = False
+        self.frameBuffer = Queue(maxsize=queueSize)
+
+    def start(self):
+        # start a thread to read frames from the file video stream
+        t = Thread(target=self.update, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    def update(self):
+        # keep looping infinitely
+        while self.stream.isOpened():
+            # if the thread indicator variable is set, stop the thread
+            if self.stopped:
+                return
+
+            # otherwise, ensure the queue has room in it
+            if not self.frameBuffer.full():
+                (grabbed, frame) = self.stream.read()
+                if not grabbed:
+                    self.stop()
+                    return
+                # add the frame to the queue
+                self.frameBuffer.put(frame)
+
+    def read(self):
+        # return next frame in the queue
+        return self.frameBuffer.get()
+
+    def more(self):
+        # return True if there are still frames in the queue
+        return self.frameBuffer.qsize() > 0
+
+    def stop(self):
+        # indicate that the thread should be stopped
+        self.stopped = True
 
 def showImage(img, window = 'Image'):
     """ Shows the image in a resizeable window"""
@@ -85,10 +128,13 @@ def showImagesInDirectory(directory):
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    showImagesInDirectory('/home/aestaq/Pictures')
-    # img = cv2.imread('C:\Users\Aesta\Pictures\Screenshots\Screenshot.png')
-    # im = rotateImg(img, 45)
-    # print img.shape, im.shape
-    # showImage(img)
-    # showImage(im, 'Rotated')
-    # key = cv2.waitKey(0)
+    import time
+    # showImagesInDirectory('/home/aestaq/Pictures')
+    cap = VideoStream('/home/aestaq/Videos/qb.mp4').start()
+    time.sleep(1.0)
+    while cap.more():
+        frame = cap.read()
+        showImage(frame)
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27:
+            break
