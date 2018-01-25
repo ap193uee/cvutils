@@ -89,23 +89,14 @@ def rotateImg(img, angle, crop = False):
         out = cv2.warpAffine(img, M, (int(W), int(H)))
     return out
 
-def draw_bbox(img, detections, typ='json'):
-    """ Draws bounding boxes of detection on given image """
-    for obj in detections:
-        if typ == 'json':
-            x1, y1, x2, y2 = obj['box']['topleft']['x'], obj['box']['topleft']['y'], obj['box']['bottomright']['x'], obj['box']['bottomright']['y']
-        elif typ == 'opencv':
-            x1, y1, x2, y2 = obj[0], obj[1], obj[0]+obj[2], obj[1]+obj[3]
-        cv2.rectangle(img, (x1, y1), (x2, y2), (0,255,0), 2)
-    return img
-
-def draw_label(img, loc):
+def draw_label(img, text, topleft):
     # draw class text
-    yoff = -10 if y1 > 20 else 20   # text remains inside image
+    x, y = topleft
+    yoff = -10 if y > 20 else 20   # text remains inside image
     if cv2_version == '2':
-        cv2.putText(img, obj['class'], (x1, y1+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.CV_AA)
+        cv2.putText(img, text, (x, y+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.CV_AA)
     else:
-        cv2.putText(img, obj['class'], (x1, y1+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.LINE_AA)
+        cv2.putText(img, text, (x, y+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.LINE_AA)
     return img
 
 def showImagesInDirectory(directory):
