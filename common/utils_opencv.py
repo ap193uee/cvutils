@@ -4,6 +4,7 @@ from threading import Thread
 from Queue import Queue
 
 cv2_version = cv2.__version__.split('.')[0]
+FACE_PAD = 50
 
 class VideoStream(object):
     def __init__(self, url, queueSize=4):
@@ -68,6 +69,12 @@ def resizeImg(img, size, keepAspect = False):
     else:
         out = cv2.resize(img, size)
     return out
+
+def sub_image(img, bbox):
+    upper_cut = [min(img.shape[0], bbox['bottomright']['y'] + FACE_PAD), min(img.shape[1], bbox['bottomright']['x'] + FACE_PAD)]
+    lower_cut = [max(bbox['topleft']['y'] - FACE_PAD, 0), max(bbox['topleft']['x'] - FACE_PAD, 0)]
+    roi_color = img[lower_cut[0]:upper_cut[0], lower_cut[1]:upper_cut[1]]
+    return roi_color
 
 def rotateImg(img, angle, crop = False):
     """ Rotate an image counter-clockwise by given angle with or without cropping.
