@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # showImagesInDirectory('/home/aestaq/Pictures')
     cap = VideoStream('/home/aestaq/Videos/qb.mp4').start()
     time.sleep(1.0)
-    while cap.more():
+    while not cap.stopped:
         frame = cap.read()
         showImage(frame)
         key = cv2.waitKey(1) & 0xFF
