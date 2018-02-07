@@ -9,7 +9,8 @@ FACE_PAD = 50
 class VideoStream(object):
     def __init__(self, url, queueSize=4):
         self.stream = cv2.VideoCapture(url)
-        self.stream.set(cv2.CAP_PROP_BUFFERSIZE,3)
+        if cv2_version == '3':
+            self.stream.set(cv2.CAP_PROP_BUFFERSIZE,3)
         self.stopped = False
         self.frameBuffer = Queue(maxsize=queueSize)
 
