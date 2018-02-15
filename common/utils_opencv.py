@@ -54,20 +54,37 @@ def showImage(img, window = 'Image'):
     cv2.namedWindow(window, cv2.WINDOW_NORMAL)
     cv2.imshow(window,  img)
 
-def resizeImg(img, size, keepAspect = False):
+def resizeImg(img, size, keepAspect = False, padding = False):
     """ Resize the image to given size.
     img         -- input source image
     size        -- (w,h) of desired resized image
     keepAspect  -- to preserve aspect ratio during resize 
+    padding     -- to add black padding when target aspect is different 
     """
-    h, w = img.shape[:2]
+    dtype = img.dtype
+    outW, outH = size
+
+    if len(img.shape)>2:
+        h, w, d = img.shape[:3]
+        if padding:
+            outimg = np.zeros((outH, outW, d), dtype=dtype)
+    else:
+        h, w = img.shape[:2]
+        if padding:
+            outimg = np.zeros((outH, outW), dtype=dtype)
+
     if keepAspect:
         aspect = float(w)/h
-        outW, outH = size
         if int(outH*aspect) < outW:   #output image is wider so limiting factor is height
             out = cv2.resize(img, (int(outH*aspect), outH))
+            if padding:
+                outimg[:, (outW-int(outH*aspect))/2:(outW+int(outH*aspect))/2, ] = out
+                out = outimg
         else:
             out = cv2.resize(img, (outW, int(outW/aspect)))
+            if padding:
+                outimg[(outH-int(outW/aspect))/2:(outH+int(outW/aspect))/2, ] = out
+                out = outimg
     else:
         out = cv2.resize(img, size)
     return out
@@ -134,6 +151,7 @@ if __name__ == '__main__':
     time.sleep(1.0)
     while not cap.stopped:
         frame = cap.read()
+        frame = resizeImg(frame, (400, 400), keepAspect=True, padding=True)
         showImage(frame)
         key = cv2.waitKey(1) & 0xFF
         if key == 27:
