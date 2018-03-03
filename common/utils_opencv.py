@@ -47,6 +47,7 @@ class VideoStream(object):
 
     def stop(self):
         # indicate that the thread should be stopped
+        self.stopped = True
 
 def showImage(img, window = 'Image'):
     """ Shows the image in a resizeable window"""
