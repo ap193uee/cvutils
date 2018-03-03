@@ -47,7 +47,6 @@ class VideoStream(object):
 
     def stop(self):
         # indicate that the thread should be stopped
-        self.stopped = True
 
 def showImage(img, window = 'Image'):
     """ Shows the image in a resizeable window"""
@@ -89,9 +88,9 @@ def resizeImg(img, size, keepAspect = False, padding = False):
         out = cv2.resize(img, size)
     return out
 
-def sub_image(img, bbox):
-    upper_cut = [min(img.shape[0], bbox['bottomright']['y'] + FACE_PAD), min(img.shape[1], bbox['bottomright']['x'] + FACE_PAD)]
-    lower_cut = [max(bbox['topleft']['y'] - FACE_PAD, 0), max(bbox['topleft']['x'] - FACE_PAD, 0)]
+def subImage(img, bbox, padding=FACE_PAD):
+    upper_cut = [min(img.shape[0], bbox['bottomright']['y'] + padding), min(img.shape[1], bbox['bottomright']['x'] + padding)]
+    lower_cut = [max(bbox['topleft']['y'] - padding, 0), max(bbox['topleft']['x'] - padding, 0)]
     roi_color = img[lower_cut[0]:upper_cut[0], lower_cut[1]:upper_cut[1]]
     return roi_color
 
@@ -115,14 +114,14 @@ def rotateImg(img, angle, crop = False):
         out = cv2.warpAffine(img, M, (int(W), int(H)))
     return out
 
-def draw_label(img, text, topleft):
+def drawLabel(img, text, topleft, font=cv2.FONT_HERSHEY_SIMPLEX, size = 0.6, color=(0,255,0), thickness=2):
     # draw class text
     x, y = topleft
     yoff = -10 if y > 20 else 20   # text remains inside image
     if cv2_version == '2':
-        cv2.putText(img, text, (x, y+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.CV_AA)
+        cv2.putText(img, text, (x, y+yoff), font, size, color, thickness, cv2.CV_AA)
     else:
-        cv2.putText(img, text, (x, y+yoff), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2, cv2.LINE_AA)
+        cv2.putText(img, text, (x, y+yoff), font, size, color, thickness, cv2.LINE_AA)
     return img
 
 def showImagesInDirectory(directory):
