@@ -7,12 +7,13 @@ cv2_version = cv2.__version__.split('.')[0]
 FACE_PAD = 50
 
 class VideoStream(object):
-    def __init__(self, url, queueSize=4):
+    def __init__(self, url, queueSize=4, mdde='buffer'):
         self.stream = cv2.VideoCapture(url)
         if cv2_version == '3':
             self.stream.set(cv2.CAP_PROP_BUFFERSIZE,3)
         self.stopped = False
         self.frameBuffer = Queue(maxsize=queueSize)
+        self.mode = mode
 
     def start(self):
         # start a thread to read frames from the file video stream
@@ -36,6 +37,9 @@ class VideoStream(object):
                     return
                 # add the frame to the queue
                 self.frameBuffer.put(frame)
+
+            if self.mode == 'stream' and self.frameBuffer.full():
+                self.frameBuffer.get()
 
     def read(self):
         # return next frame in the queue
@@ -147,7 +151,7 @@ def showImagesInDirectory(directory):
 if __name__ == '__main__':
     import time
     # showImagesInDirectory('/home/aestaq/Pictures')
-    cap = VideoStream('/home/aestaq/Videos/qb.mp4').start()
+    cap = VideoStream(0).start()
     time.sleep(1.0)
     while not cap.stopped:
         frame = cap.read()
