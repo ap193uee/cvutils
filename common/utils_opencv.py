@@ -7,7 +7,7 @@ cv2_version = cv2.__version__.split('.')[0]
 FACE_PAD = 50
 
 class VideoStream(object):
-    def __init__(self, url, queueSize=4, mdde='buffer'):
+    def __init__(self, url, queueSize=4, mode='buffer'):
         self.stream = cv2.VideoCapture(url)
         if cv2_version == '3':
             self.stream.set(cv2.CAP_PROP_BUFFERSIZE,3)
