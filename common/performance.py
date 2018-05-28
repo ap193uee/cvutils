@@ -5,7 +5,7 @@ class Multicore(object):
         from time import sleep
 
         self.processn = cpu_count()
-        self.pool = Pool(processes = self.processn)
+        self.pool = Pool(processes=self.processn)
         self.pending = deque()
         self.func = func
         self.wait = sleep
@@ -16,8 +16,8 @@ class Multicore(object):
             if len(self.pending) == self.processn:
                 while not self.pending[0].ready():
                     self.wait(0.01)
-                out = self.pending.popleft().get() 
+                out = self.pending.popleft().get()
         if len(self.pending) < self.processn:
             task = self.pool.apply_async(self.func, (args))
-            self.pending.append(task)            
+            self.pending.append(task)
         return out

@@ -1,16 +1,16 @@
 from setuptools import setup
 
-setup( 
+setup(
     name='common',
-    
+
     version='1.0.0',
     description='Common utlity functions',
     url='http://demo.vedalabs.in/',
 
-    # Author details    
+    # Author details
     author='Atinderpal Singh',
     author_email='atinderpalap@gmail.com',
-    
+
     license='MIT',
 
     packages=['common'],
