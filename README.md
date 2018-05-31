@@ -1,6 +1,6 @@
 # README #
 
-Common library with python code snippets used fraquently.
+Common library with python code snippets used frequently.
 
 ### Libraries Implemented ###
 

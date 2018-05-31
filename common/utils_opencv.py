@@ -55,6 +55,10 @@ class VideoStream(object):
         self.stopped = True
 
 
+def clock():
+    return cv2.getTickCount() / cv2.getTickFrequency()
+
+
 def showImage(img, window='Image'):
     """ Shows the image in a resizeable window"""
     cv2.namedWindow(window, cv2.WINDOW_NORMAL)
