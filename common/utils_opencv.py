@@ -1,57 +1,61 @@
+#!/usr/bin/env python
+
+from __future__ import absolute_import
+from __future__ import print_function
+
 import cv2
 import numpy as np
-from threading import Thread
-from Queue import Queue
 
 cv2_version = cv2.__version__.split('.')[0]
-FACE_PAD = 50
 
 
 class VideoStream(object):
     def __init__(self, url, queueSize=4, mode='buffer'):
-        self.stream = cv2.VideoCapture(url)
-        if cv2_version == '3':
-            self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+        from Queue import Queue
         self.stopped = False
         self.frameBuffer = Queue(maxsize=queueSize)
         self.mode = mode
+        self.stream = cv2.VideoCapture(url)
+        if cv2_version == '3':
+            self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 3)
 
     def start(self):
-        # start a thread to read frames from the file video stream
+        """ start a thread to read frames from the file video stream. """
+        from threading import Thread
         t = Thread(target=self.update, args=())
         t.daemon = True
         t.start()
         return self
 
     def update(self):
-        # keep looping infinitely
+        """ capture frame from stream and add it to queue in a loop until eos """
         while self.stream.isOpened():
-            # if the thread indicator variable is set, stop the thread
+            # if the thread stop indicator variable is set, stop capturing
             if self.stopped:
                 return
 
-            # otherwise, ensure the queue has room in it
+            # otherwise, ensure the queue has room in it and add frame to it
             if not self.frameBuffer.full():
                 (grabbed, frame) = self.stream.read()
                 if not grabbed:
                     self.stop()
                     return
-                # add the frame to the queue
                 self.frameBuffer.put(frame)
 
+            # for stream mode, stash the last frame in the queue if queue is full
             if self.mode == 'stream' and self.frameBuffer.full():
                 self.frameBuffer.get()
 
     def read(self):
-        # return next frame in the queue
+        """ returns next frame in the queue. """
         return self.frameBuffer.get()
 
     def more(self):
-        # return True if there are still frames in the queue
+        """ checks if there are still frames in the queue. """
         return self.frameBuffer.qsize() > 0
 
     def stop(self):
-        # indicate that the thread should be stopped
+        """ Stops the videostream thread """
         self.stopped = True
 
 
@@ -59,88 +63,138 @@ def clock():
     return cv2.getTickCount() / cv2.getTickFrequency()
 
 
-def showImage(img, window='Image'):
+def showImage(imgcv, window='Image'):
     """ Shows the image in a resizeable window"""
     cv2.namedWindow(window, cv2.WINDOW_NORMAL)
-    cv2.imshow(window,  img)
+    cv2.imshow(window,  imgcv)
 
 
-def resizeImg(img, size, keepAspect=False, padding=False):
-    """ Resize the image to given size.
-    img         -- input source image
+def resizeImg(imgcv, size, keepAspect=False, padding=False):
+    """ Resize the input image to given size.
+    imgcv       -- input source image
     size        -- (w,h) of desired resized image
     keepAspect  -- to preserve aspect ratio during resize
     padding     -- to add black padding when target aspect is different
     """
-    dtype = img.dtype
+    dtype = imgcv.dtype
     outW, outH = size
 
-    if len(img.shape) > 2:
-        h, w, d = img.shape[:3]
-        if padding:
-            outimg = np.zeros((outH, outW, d), dtype=dtype)
-    else:
-        h, w = img.shape[:2]
-        if padding:
-            outimg = np.zeros((outH, outW), dtype=dtype)
-
     if keepAspect:
+        h, w = imgcv.shape[:2]
         aspect = float(w)/h
-        if int(outH*aspect) < outW:   # output image is wider so limiting factor is height
-            out = cv2.resize(img, (int(outH*aspect), outH))
+
+        if padding:
+            if len(imgcv.shape) > 2:
+                d = imgcv.shape[2]
+                outimg = np.zeros((outH, outW, d), dtype=dtype)
+            else:
+                outimg = np.zeros((outH, outW), dtype=dtype)
+
+        # Check if output image is wider/taller to determine limiting factor
+        if int(outH*aspect) < outW:  # wider
+            out = cv2.resize(imgcv, (int(outH*aspect), outH))
             if padding:
                 outimg[:, (outW-int(outH*aspect))/2:(outW+int(outH*aspect))/2, ] = out
                 out = outimg
         else:
-            out = cv2.resize(img, (outW, int(outW/aspect)))
+            out = cv2.resize(imgcv, (outW, int(outW/aspect)))
             if padding:
                 outimg[(outH-int(outW/aspect))/2:(outH+int(outW/aspect))/2, ] = out
                 out = outimg
     else:
-        out = cv2.resize(img, size)
+        out = cv2.resize(imgcv, size)
     return out
 
 
-def subImage(img, bbox, padding=FACE_PAD):
-    upper_cut = [min(img.shape[0], bbox['bottomright']['y'] + padding),
-                 min(img.shape[1], bbox['bottomright']['x'] + padding)]
-    lower_cut = [max(bbox['topleft']['y'] - padding, 0),
-                 max(bbox['topleft']['x'] - padding, 0)]
-    roi_color = img[lower_cut[0]:upper_cut[0], lower_cut[1]:upper_cut[1]]
-    return roi_color
-
-
-def rotateImg(img, angle, crop=False):
-    """ Rotate an image counter-clockwise by given angle with or without cropping.
-    img         -- input source image
-    angle       -- angle in degrees to ratate the img to
-    crop        -- to change/preserve the size while rotating
+def subImage(imgcv, cvbox, padding=20, padding_type='percentage'):
+    """ Extract sub image from given image with padding around
+        imgcv   -- input source image
+        cvbox    -- bounding box of subimage to be cropped
+        padding -- padding value of padding_type
+        padding_type -- 'absolute' or 'percentage'
     """
-    h, w = img.shape[:2]
-    centre = (img.shape[1]/2, img.shape[0]/2)
+    x1, y1 = cvbox['topleft']['x'], cvbox['topleft']['y']
+    x2, y2 = cvbox['bottomright']['x'], cvbox['bottomright']['y']
+
+    if padding_type == 'percentage':
+        offset = padding*(x2 + y2 - x1 - y1)/200
+    else:
+        offset = padding
+    upper_cut = [min(imgcv.shape[0], y2 + offset),
+                 min(imgcv.shape[1], x2 + offset)]
+    lower_cut = [max(y1 - offset, 0),
+                 max(x1 - offset, 0)]
+    sub_img = imgcv[lower_cut[0]:upper_cut[0], lower_cut[1]:upper_cut[1]]
+    return sub_img
+
+
+def rotateImg(imgcv, angle, crop=False):
+    """ Rotate an image counter-clockwise by given angle with or without cropping.
+        imgcv   -- input source image
+        angle   -- angle in degrees to ratate the imgcv to
+        crop    -- to change/preserve the size while rotating
+    """
+    h, w = imgcv.shape[:2]
+    centre = (imgcv.shape[1]/2, imgcv.shape[0]/2)
     M = cv2.getRotationMatrix2D(centre, angle, 1.0)
     if crop:
-        out = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR)
+        out = cv2.warpAffine(imgcv, M, (w, h), flags=cv2.INTER_LINEAR)
     else:
         rangle = np.deg2rad(angle)
         H = abs(h*np.cos(rangle) + w*np.sin(rangle))
         W = abs(w*np.cos(rangle) + h*np.sin(rangle))
         M[0, 2] += (W-w)/2
         M[1, 2] += (H-h)/2
-        out = cv2.warpAffine(img, M, (int(W), int(H)))
+        out = cv2.warpAffine(imgcv, M, (int(W), int(H)))
     return out
 
 
-def drawLabel(img, text, topleft,
-              font=cv2.FONT_HERSHEY_SIMPLEX, size=0.6, color=(0, 255, 0), thickness=2):
-    # draw class text
+def drawLabel(imgcv, text, topleft,
+              font=cv2.FONT_HERSHEY_SIMPLEX, size=None,
+              color=(0, 255, 0), thickness=None):
+    """ Draws text at topleft location. """
+    h, w = imgcv.shape[:2]
     x, y = topleft
+
+    if not thickness:
+        thickness = max(1, (h + w) // 500)
+    if not size:
+        size = max(0.001*h, 0.5)
+
+    out = imgcv.copy()
     yoff = -10 if y > 20 else 20   # text remains inside image
     if cv2_version == '2':
-        cv2.putText(img, text, (x, y+yoff), font, size, color, thickness, cv2.CV_AA)
+        cv2.putText(out, text, (x, y+yoff), font, size, color, thickness, cv2.CV_AA)
     else:
-        cv2.putText(img, text, (x, y+yoff), font, size, color, thickness, cv2.LINE_AA)
-    return img
+        cv2.putText(out, text, (x, y+yoff), font, size, color, thickness, cv2.LINE_AA)
+    return out
+
+
+def drawObjects(imgcv, detections, tids=None, thickness=None):
+    """
+    Draws rectangle around detected detections.
+    Arguments:
+        imgcv    -- image in numpy array on which the rectangles are to be drawn
+        detections -- list of detections in a format given in Oject Detection Class
+        tids     -- tracking ids to show along class name
+    Returns:
+        out    -- image in numpy array format with drawn rectangles
+    """
+    h, w = imgcv.shape[:2]
+    if not thickness:
+        thickness = max(1, (h + w) // 500)
+    if tids is None:
+        tids = ['']*len(detections)
+
+    out = imgcv.copy()
+    for det, tid in zip(detections, tids):
+        x1, y1 = det['box']['topleft']['x'], det['box']['topleft']['y']
+        x2, y2 = det['box']['bottomright']['x'], det['box']['bottomright']['y']
+        cv2.rectangle(out, (x1, y1), (x2, y2), (0, 255, 0), thickness)
+
+        text = "%s_%s" % (det['class'], tid)
+        out = drawLabel(out, text, (x1, y1))
+    return out
 
 
 def showImagesInDirectory(directory):
@@ -151,16 +205,23 @@ def showImagesInDirectory(directory):
             try:
                 file_path = path.join(root, name)
                 frame = cv2.imread(file_path, -1)
-                print 'Original Image Size:', frame.shape, name
+                print('Image Name:%s Image Size:%s' % (name, frame.shape))
                 showImage(frame)
             except Exception, e:
-                print 'Exception: ', e
+                print('Exception: %s' % e)
             key = 0xFF & cv2.waitKey(0)
             if key == 27:
                 break
         if key == 27:
             break
     cv2.destroyAllWindows()
+
+
+def toCvbox(detections):
+    return [(det['box']['topleft']['x'], det['box']['topleft']['y'],
+            det['box']['bottomright']['x']-det['box']['topleft']['x'],
+            det['box']['bottomright']['y']-det['box']['topleft']['y'])
+            for det in detections]
 
 
 if __name__ == '__main__':
@@ -170,8 +231,8 @@ if __name__ == '__main__':
     time.sleep(1.0)
     while not cap.stopped:
         frame = cap.read()
-        frame = resizeImg(frame, (400, 400), keepAspect=True, padding=True)
-        frame = drawLabel(frame, 'TEST', (10, 10))
+        # frame = resizeImg(frame, (400, 400), keepAspect=True, padding=True)
+        frame = drawLabel(frame, 'Test', (10, 10))
         showImage(frame)
         showImage(subImage(frame, {'bottomright': {'x': 100, 'y': 100},
                                    'topleft': {'x': 0, 'y': 0}}), window='subImage')
