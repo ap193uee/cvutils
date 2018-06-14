@@ -106,15 +106,15 @@ def resizeImg(imgcv, size, keepAspect=False, padding=False):
     return out
 
 
-def subImage(imgcv, cvbox, padding=20, padding_type='percentage'):
+def subImage(imgcv, bbox, padding=20, padding_type='percentage'):
     """ Extract sub image from given image with padding around
         imgcv   -- input source image
-        cvbox    -- bounding box of subimage to be cropped
+        bbox    -- bounding box of subimage to be cropped
         padding -- padding value of padding_type
         padding_type -- 'absolute' or 'percentage'
     """
-    x1, y1 = cvbox['topleft']['x'], cvbox['topleft']['y']
-    x2, y2 = cvbox['bottomright']['x'], cvbox['bottomright']['y']
+    x1, y1 = bbox['topleft']['x'], bbox['topleft']['y']
+    x2, y2 = bbox['bottomright']['x'], bbox['bottomright']['y']
 
     if padding_type == 'percentage':
         offset = padding*(x2 + y2 - x1 - y1)/200
@@ -147,6 +147,15 @@ def rotateImg(imgcv, angle, crop=False):
         M[1, 2] += (H-h)/2
         out = cv2.warpAffine(imgcv, M, (int(W), int(H)))
     return out
+
+
+def detectBlur(imgcv, threshold=100.0):
+    sharpness = cv2.Laplacian(imgcv, cv2.CV_64F).var()
+    return sharpness < threshold, sharpness
+
+
+def enhance(image, brightness=0.1, contrast=0.1):
+    return cv2.addWeighted(image, 1 + contrast, image, 0, brightness*255)
 
 
 def drawLabel(imgcv, text, topleft,
@@ -234,8 +243,10 @@ if __name__ == '__main__':
         # frame = resizeImg(frame, (400, 400), keepAspect=True, padding=True)
         frame = drawLabel(frame, 'Test', (10, 10))
         showImage(frame)
-        showImage(subImage(frame, {'bottomright': {'x': 100, 'y': 100},
-                                   'topleft': {'x': 0, 'y': 0}}), window='subImage')
+        showImage(enhance(frame, brightness=0.5, contrast=0), 'bright')
+        showImage(enhance(frame, brightness=0.2, contrast=0.4), 'contrast')
+        # showImage(subImage(frame, {'bottomright': {'x': 100, 'y': 100},
+        #                            'topleft': {'x': 0, 'y': 0}}), window='subImage')
         key = cv2.waitKey(1) & 0xFF
         if key == 27:
             break
