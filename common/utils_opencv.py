@@ -45,6 +45,8 @@ class VideoStream(object):
             # for stream mode, stash the last frame in the queue if queue is full
             if self.mode == 'stream' and self.frameBuffer.full():
                 self.frameBuffer.get()
+        self.stop()
+        return
 
     def read(self):
         """ returns next frame in the queue. """
@@ -138,11 +140,11 @@ def rotateImg(imgcv, angle, crop=False):
     centre = (imgcv.shape[1]/2, imgcv.shape[0]/2)
     M = cv2.getRotationMatrix2D(centre, angle, 1.0)
     if crop:
-        out = cv2.warpAffine(imgcv, M, (w, h), flags=cv2.INTER_LINEAR)
+        out = cv2.warpAffine(imgcv, M, (w, h))
     else:
         rangle = np.deg2rad(angle)
-        H = abs(h*np.cos(rangle) + w*np.sin(rangle))
-        W = abs(w*np.cos(rangle) + h*np.sin(rangle))
+        H = abs(h*np.cos(rangle)) + abs(w*np.sin(rangle))
+        W = abs(w*np.cos(rangle)) + abs(h*np.sin(rangle))
         M[0, 2] += (W-w)/2
         M[1, 2] += (H-h)/2
         out = cv2.warpAffine(imgcv, M, (int(W), int(H)))
@@ -234,10 +236,10 @@ def toCvbox(detections):
 
 
 if __name__ == '__main__':
-    import time
+    url = '/home/aestaq/Videos/test.avi'
     # showImagesInDirectory('/home/aestaq/Pictures')
-    cap = VideoStream(0).start()
-    time.sleep(1.0)
+    cap = VideoStream(url).start()
+    cv2.waitKey(500)
     while not cap.stopped:
         frame = cap.read()
         # frame = resizeImg(frame, (400, 400), keepAspect=True, padding=True)
