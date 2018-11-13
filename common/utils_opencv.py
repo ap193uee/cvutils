@@ -218,7 +218,7 @@ def showImagesInDirectory(directory):
                 frame = cv2.imread(file_path, -1)
                 print('Image Name:%s Image Size:%s' % (name, frame.shape))
                 showImage(frame)
-            except Exception, e:
+            except Exception as e:
                 print('Exception: %s' % e)
             key = 0xFF & cv2.waitKey(0)
             if key == 27:
