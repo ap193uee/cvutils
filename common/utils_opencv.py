@@ -160,6 +160,17 @@ def enhance(image, brightness=0.1, contrast=0.1):
     return cv2.addWeighted(image, 1 + contrast, image, 0, brightness*255)
 
 
+def adjust_gamma(imgcv, gamma=1.0):
+	# build a lookup table mapping the pixel values [0, 255] to
+	# their adjusted gamma values
+	invGamma = 1.0 / gamma
+	table = np.array([((i / 255.0) ** invGamma) * 255
+		for i in np.arange(0, 256)]).astype("uint8")
+    
+	# apply gamma correction using the lookup table
+	return cv2.LUT(imgcv, table)
+
+
 def drawLabel(imgcv, text, topleft,
               font=cv2.FONT_HERSHEY_SIMPLEX, size=None,
               color=(0, 255, 0), thickness=None):
