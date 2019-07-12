@@ -10,5 +10,5 @@ Common library with python code snippets used frequently.
 ### Installation ###
 
 ```sh
-pip install --user git+https://github.com/ap193uee/common.git
+pip install --user git+https://gitlab.com/_macherlabs/visonlibs/common.git
 ```
