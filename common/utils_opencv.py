@@ -122,23 +122,30 @@ def subImage(img, bbox, padding_type = "50_pixel", padding=FACE_PAD):
 
         if(diff > 0):
             if not diff % 2:  # symmetric
-                tmp = img[(y1-tol-up_down):(y2+tol-up_down),
-                          (x1-tol-int(diff/2)):(x2+tol+int(diff/2)),
-                          :]
+                y1 = y1-tol-up_down if (y1-tol-up_down) >= 0 else 0
+                y2 = y2+tol-up_down if (y2+tol-up_down) < img.shape[0] else img.shape[0]-1
+                x1 = x1-tol-int(diff/2) if (x1-tol-int(diff/2)) >=0 else 0
+                x2 = x2+tol+int((diff+1)/2) if (x2+tol+int((diff+1)/2)) < img.shape[1] else img.shape[1]-1
+                tmp = img[y1:y2,x1:x2,:]
             else:
-                tmp = img[(y1-tol-up_down):(y2+tol-up_down),
-                          (x1-tol-int((diff-1)/2)):(x2+tol+int((diff+1)/2)),
-                          :]
+                y1 = y1-tol-up_down if (y1-tol-up_down) >= 0 else 0
+                y2 = y2+tol-up_down if (y2+tol-up_down) < img.shape[0] else img.shape[0]-1
+                x1 = x1-tol-int((diff-1)/2) if (x1-tol-int((diff-1)/2)) >=0 else 0
+                x2 = x2+tol+int((diff+1)/2) if (x2+tol+int((diff+1)/2)) < img.shape[1] else img.shape[1]-1
+                tmp = img[y1:y2,x1:x2,:]
         if(diff <= 0):
             if not diff % 2:  # symmetric
-                tmp = img[(y1-tol-int(diff/2)-up_down):(y2+tol+int(diff/2)-up_down),
-                          (x1-tol):(x2+tol),
-                          :]
+                y1 = y1-tol-int(diff/2)-up_down if (y1-tol-int(diff/2)-up_down) >= 0 else 0
+                y2 = y2+tol+int(diff/2)-up_down if (y2+tol+int(diff/2)-up_down) < img.shape[0] else img.shape[0]-1
+                x1 = x1-tol if (x1-tol) >= 0 else 0
+                x2 = x2+tol if (x2+tol) < img.shape[1] else img.shape[1]-1
+                tmp = img[y1:y2,x1:x2,:]
             else:
-                tmp = img[(y1-tol-int((diff-1)/2)-up_down):(y2+tol+int((diff+1)/2)-up_down),
-                          (x1-tol):(x2+tol),
-                          :]
-
+                y1 = y1-tol-int((diff-1)/2)-up_down if (y1-tol-int((diff-1)/2)-up_down) >=0 else 0
+                y2 = y2+tol+int((diff+1)/2)-up_down if (y2+tol+int((diff+1)/2)-up_down) < img.shape[0] else img.shape[0]-1
+                x1 = x1-tol if (x1-tol) >= 0 else 0
+                x2 = x2+tol if (x2+tol) < img.shape[1] else img.shape[1]-1
+                tmp = img[y1:y2,x1:x2,:]
         tmp = np.array(Image.fromarray(np.uint8(tmp)).resize((120, 120), Image.ANTIALIAS))
 
         return tmp
