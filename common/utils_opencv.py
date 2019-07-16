@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from threading import Thread
 from queue import Queue
+from PIL import Image
 
 cv2_version = cv2.__version__.split('.')[0]
 FACE_PAD = 50
