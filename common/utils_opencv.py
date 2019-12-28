@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
 from threading import Thread
-from queue import Queue
-from PIL import Image
 
+from PIL import Image
+try:
+   from queue import Queue
+Except ImportError:
+    from Queue import Queue
+    
 cv2_version = cv2.__version__.split('.')[0]
 FACE_PAD = 50
 
