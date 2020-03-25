@@ -35,16 +35,19 @@ class VideoWriter(object):
 
         if timestamp_filename:
             self.filename_pattern = '%s-%s%s'%(self.filename, '{}', self.file_extension)
-            self.filename_pattern_annotations = '%s-%s%s'%(self.filename, '{}', self.annotations_extension)
+            if self.annotations:
+                self.filename_pattern_annotations = '%s-%s%s'%(self.filename, '{}', self.annotations_extension)
             self.cleanup_pattern = '.*%s-%s%s'%(self.filename, '.*', self.file_extension)
         else:
             self.filename_pattern = '%s%s'%(self.filename, self.file_extension)
-            self.filename_pattern_annotations = '%s-%s'%(self.filename, self.annotations_extension)
+            if self.annotations:
+                self.filename_pattern_annotations = '%s-%s'%(self.filename, self.annotations_extension)
             self.cleanup_pattern = '.*%s%s'%(self.filename, self.file_extension)
         
         if base_dir:
             self.filename_pattern = os.path.join(base_dir, self.filename_pattern)
-            self.filename_pattern_annotations = os.path.join(base_dir,self.filename_pattern_annotations)
+            if self.annotations:
+                self.filename_pattern_annotations = os.path.join(base_dir,self.filename_pattern_annotations)
             self.base_dir = base_dir
         else:
             self.base_dir = os.path.dirname(self.filename)
