@@ -78,9 +78,10 @@ class VideoWriter(object):
             # Start new recording
             datestr = datetime.now().strftime("%d-%m-%y-%H%M%S")
             self.vname = self.filename_pattern.format(datestr)
-            self.aname=self.filename_pattern_annotations.format(datestr)
-            logger.info('Annotations file created - %s', self.aname)
-            self.writeAnnotationHeader()
+            if self.annotations:
+                self.aname=self.filename_pattern_annotations.format(datestr)
+                logger.info('Annotations file created - %s', self.aname)
+                self.writeAnnotationHeader()
             self.videow = cv2.VideoWriter(self.vname, self.fourcc, int(self.fps), self.frameSize)
             logger.info('Video Saved - %s', self.vname)
             # Frame Count and fps calculation variable init
