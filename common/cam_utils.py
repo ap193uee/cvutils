@@ -17,7 +17,7 @@ class cap_rtsp():
         username = self.config.get('username', None)
         password = self.config.get('password', None)
         if username and password and(self.config['url'].find('@')==-1):
-            url=self.config['url'][0:7]+username+'@'+password+self.config['url'][7:]
+            url=self.config['url'][0:7]+username+':'+password+'@'+self.config['url'][7:]
             self.config['url']=url
         self.video = cv2.VideoCapture(self.config['url'])
         params = self.config.get('params',{})
