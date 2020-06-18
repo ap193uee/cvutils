@@ -38,7 +38,7 @@ class cap_rtsp():
                 return 1,frame
         else:
             logger.info('camera capture object not opened for camera {} ,url{}'.format(self.config['name'],self.config['url']))
-            return None
+            return 0,None
 
     def reinitialize(self):
         self.video.release()
