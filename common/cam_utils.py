@@ -13,7 +13,7 @@ class cap_rtsp():
     def __init__(self, config):
         
         self.config = config
-        logger.info("URL : " + self.config["url"])
+        logger.info("URL : " + str(self.config["url"]))
         username = self.config.get('username', None)
         password = self.config.get('password', None)
         if username and password and(self.config['url'].find('@')==-1):
