@@ -2,7 +2,7 @@ import subprocess
 
 import sys
 
-def find_path(vendor_id=sys.argv[1]):
+def find_usb_cam_path(vendor_id=sys.argv[1]):
     for num in range (0,10):
         cam_path = '/dev/video'+str(num)
         try:
