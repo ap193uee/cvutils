@@ -9,7 +9,7 @@ def find_usb_cam_path(vendor_id):
             ps = subprocess.Popen(['udevadm', 'info', '--query=all',cam_path], stdout=subprocess.PIPE)
             output = subprocess.check_output(('grep', 'VENDOR_ID'), stdin=ps.stdout)
             ps.wait()
-            res=output.split('\n')[0]
+            res=output.decode('utf-8').split('\n')[0]
             index = res.find('=')
             res=res[index+1:]
             print("res",res)
