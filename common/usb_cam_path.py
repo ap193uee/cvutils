@@ -19,7 +19,7 @@ def find_usb_cam_path(**kwargs):
     SERIAL_ID=kwargs.get('SERIAL_ID',None)
     print(VENDOR_ID,MODEL_ID,SERIAL_ID)
     match_pattern='VENDOR_ID\|MODEL_ID\|SERIAL_SHORT'
-]
+    
     # Loop through camera mount paths and find the matching ids
     for num in range (0,10):
         cam_path = '/dev/video'+str(num)
