@@ -29,3 +29,7 @@ video_writer = VideoWriter(filename='pc-rgb.'+'.avi',
  video_writer.write(img,annotation)
  
 ```
+### USB cam_finder usage###
+```sh
+cam_mount_path=find_usb_cam_path('VENDOR_ID'='1234','MODEL_ID'='12',SERIAL_ID='123')
+```
