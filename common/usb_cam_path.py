@@ -4,12 +4,18 @@ import sys
 
 def get_ids(res_ids):
 #    print("here",res_ids)
-    ids=[]
+    sid,vid,mid="","",""
     for res in res_ids:
         index = res.find('=')
         id=res[index+1:]
-        ids.append(id)
-    return ids[0],ids[1],ids[2]
+#        ids.append(id)
+        if res.find('VENDOR')!= -1:
+            vid=id
+        elif res.find('SERIAL')!= -1:
+            sid=id
+        elif res.find('MODEL')!= -1:
+            mid=id
+    return mid,sid,vid
 
 def find_usb_cam_path(**kwargs):
     
