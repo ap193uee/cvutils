@@ -1,8 +1,8 @@
 import multiprocessing 
 import time
 import logging 
-import Camera_Base
-import Camera_types
+from . import Camera_Base
+from . import Camera_types
 import cv2
 import requests
 from requests.auth import HTTPBasicAuth

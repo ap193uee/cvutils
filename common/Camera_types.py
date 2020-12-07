@@ -2,7 +2,7 @@ import logging
 import cv2			#opencv2 library 
 import time			#time module
 import operator		#operator module for map function used for math operations on lists
-import Camera_Base
+from . import Camera_Base
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "Behaviors"))
