@@ -29,8 +29,6 @@ class CAM_KERNEL(multiprocessing.Process):
 		if username and password and(Configuration['url'].find('@')==-1):
 			url=Configuration['url'][0:7]+username+':'+password+'@'+Configuration['url'][7:]
 			Configuration['url']=url
-
-		Configuration["cameraType"] = "ASYNC"
 		logger.info("URL : ".format(Configuration["url"]))
 		logger.debug("Initialisation started...")
 		multiprocessing.Process.__init__(self) 
