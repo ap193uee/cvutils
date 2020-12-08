@@ -49,7 +49,7 @@ class CAM_KERNEL(multiprocessing.Process):
 			self.shutdown()
 
 	def isOpened(self):
-		return not cam.exit.is_set()
+		return not self.exit.is_set()
 
 	def read(self):
 		if not self.exit.is_set():
@@ -69,8 +69,8 @@ class CAM_KERNEL(multiprocessing.Process):
 if __name__ == "__main__":
 
 	user_config = {
-		"VedaUser":"rohit@vedalabs.in",
-		"VedaPassword":"rohit@3463",
+		"VedaUser":"",
+		"VedaPassword":"",
 		"ServerUrl":"https://api.staging.vedalabs.in",
 		"API_VERSION":"v1/rest"
 	}
