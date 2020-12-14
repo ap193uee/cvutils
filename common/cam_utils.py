@@ -7,6 +7,7 @@ import numpy as np
 import urllib
 import base64
 import time
+import threading
 
 # RTSP based capture
 class cap_rtsp():
@@ -21,6 +22,7 @@ class cap_rtsp():
             url=self.config['url'][0:7]+username+':'+password+'@'+self.config['url'][7:]
             self.config['url']=url
         self.video = cv2.VideoCapture(self.config['url'])
+        #self.video = cv2.VideoCapture(0)
         params = self.config.get('params',{})
         self.config['params']=params
         self.source_FPS = self.config['params'].get('source_fps', int(self.video.get(cv2.CAP_PROP_FPS)))
@@ -28,7 +30,23 @@ class cap_rtsp():
         self.FPS = self.config['params'].get('fps', 5)
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
         self.lastFeedTime=None
-
+        self.enableCheckBuffer=self.config.get('checkBufferThread', False)
+        if self.enableCheckBuffer:
+            self.initiate_check_buffer_thread()
+       
+        
+    def check_maintain_buffer(self):
+        while(self.checkBuffer):
+            if self.lastFeedTime:
+                if(time.time()-self.lastFeedTime>5):
+                    ret,frame=self.read()
+            time.sleep(4)
+                        
+    def initiate_check_buffer_thread(self):
+        self.checkBuffer = True
+        self.checkBufferThread=threading.Thread(target=self.check_maintain_buffer)
+        self.checkBufferThread.start()
+        
     def set(self,attribute,value):
         self.video.set(attribute,value)
 
@@ -44,14 +62,17 @@ class cap_rtsp():
             return 0,None
 
     def reinitialize(self):
+        if self.enableCheckBuffer:
+            self.checkBuffer = False
+            self.checkBufferThread.join()
         self.video.release()
         self.video = cv2.VideoCapture(self.config['url'])
+        #self.video = cv2.VideoCapture(0)
+        if self.enableCheckBuffer:
+            self.initiate_check_buffer_thread()
+        
 
     def clear(self):
-        self.config = None
-        self.source_FPS = None
-        self.FPS = None
-        self.SKIP = None
         self.video.release()
         
     def release(self):
@@ -59,12 +80,15 @@ class cap_rtsp():
 
 
     def run(self):
+    
         if self.lastFeedTime is not None:
-            timeTaken = time.time()-self.lastFeedTime
+            timeTaken = time.time()-self.lastFeedTime  
             fps=1.0/timeTaken
-            #print("fps",fps)
-            self.SKIP = min(int(self.source_FPS/fps)+1,self.source_FPS-5)
-            #print("fps",fps,self.SKIP)
+            self.SKIP = int(self.source_FPS/fps)+1
+            self.lastFeedTime=time.time()
+        else:
+            self.lastFeedTime=time.time()
+    
         for skip in range(self.SKIP)[::-1]:
             Grab_Success = False 
             try:
@@ -72,15 +96,12 @@ class cap_rtsp():
             except Exception as e:
                 logger.info("Exception in Camera grabbing frame...")
                 Grab_Success  =False
-
+            
             if Grab_Success:
                 if not skip:
-                    # frame_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     ret, frame = self.video.retrieve()
                     if ret==1 :
-                        self.lastFeedTime=time.time()
-                        return frame
-            
+                        return frame            
         return None
         
 
