@@ -47,13 +47,15 @@ class cap_rtsp():
         self.video.release()
         self.video = cv2.VideoCapture(self.config['url'])
 
-    def clear():
+    def clear(self):
         self.config = None
         self.source_FPS = None
         self.FPS = None
         self.SKIP = None
         self.video.release()
-
+        
+    def release(self):
+        self.clear()
 
 
     def run(self):
