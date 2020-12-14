@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import urllib
 import base64
+import time
 
 # RTSP based capture
 class cap_rtsp():
@@ -22,9 +23,11 @@ class cap_rtsp():
         self.video = cv2.VideoCapture(self.config['url'])
         params = self.config.get('params',{})
         self.config['params']=params
-        self.source_FPS = self.config['params'].get('source_fps', 25)
+        self.source_FPS = self.config['params'].get('source_fps', int(self.video.get(cv2.CAP_PROP_FPS)))
+        print("fps of camera-{}".format(self.source_FPS))
         self.FPS = self.config['params'].get('fps', 5)
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
+        self.lastFeedTime=None
 
     def set(self,attribute,value):
         self.video.set(attribute,value)
@@ -54,6 +57,12 @@ class cap_rtsp():
 
 
     def run(self):
+        if self.lastFeedTime is not None:
+            timeTaken = time.time()-self.lastFeedTime
+            fps=1.0/timeTaken
+            #print("fps",fps)
+            self.SKIP = min(int(self.source_FPS/fps)+1,self.source_FPS-5)
+            #print("fps",fps,self.SKIP)
         for skip in range(self.SKIP)[::-1]:
             Grab_Success = False 
             try:
@@ -67,6 +76,7 @@ class cap_rtsp():
                     # frame_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     ret, frame = self.video.retrieve()
                     if ret==1 :
+                        self.lastFeedTime=time.time()
                         return frame
             
         return None
