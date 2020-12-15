@@ -105,6 +105,7 @@ class cap_rtsp():
                     ret, frame = self.video.retrieve()
                     if ret==1 :
                         logger.info("time taken to grab frame-{}".format(time.time()-start))
+                        self.lastFeedTime=time.time()
                         return frame            
         return None
         
