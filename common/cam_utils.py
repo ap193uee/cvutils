@@ -30,14 +30,15 @@ class cap_rtsp():
         self.FPS = self.config['params'].get('fps', 5)
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
         self.lastFeedTime=None
-        self.enableCheckBuffer=self.config.get('checkBufferThread', True)
+        self.enableCheckBuffer=self.config['params'].get('checkBufferThread', True)
         if self.enableCheckBuffer:
-            self.checkBufferInterval=self.config.get('checkBufferInterval', 3)
+            self.checkBufferInterval=self.config['params'].get('checkBufferInterval', 3)
             self.initiate_check_buffer_thread()
        
         
     def check_maintain_buffer(self):
         while(self.checkBuffer):
+            logger.info("buffer check please!")
             if self.lastFeedTime:
                 if(time.time()-self.lastFeedTime>self.checkBufferInterval):
                     ret,frame=self.read()
@@ -63,10 +64,12 @@ class cap_rtsp():
             return 0,None
 
     def reinitialize(self):
+        logger.info("reinitialize called-{}".format(self.config['name']))
         if self.enableCheckBuffer:
             self.checkBuffer = False
             self.checkBufferThread.join()
         self.video.release()
+        self.video=None
         self.video = cv2.VideoCapture(self.config['url'])
         #self.video = cv2.VideoCapture(0)
         if self.enableCheckBuffer:
