@@ -44,13 +44,13 @@ class cap_rtsp():
         while(self.checkBuffer):
             if not self.lock:
                 self.lock=True
-                logger.info("camera buffer check please!")
                 if self.lastFeedTime:
                     if(time.time()-self.lastFeedTime>self.checkBufferInterval):
+                        logger.info("maintaing camera buffer-{}".format(self.config['name']))
                         ret,frame=self.read()
                 self.lock=False
             else:
-                logger.info("lock held..skipping buffer check")
+                logger.info("lock held..skipping buffer check-{}".format(self.config['name']))
             time.sleep(self.checkBufferInterval-1)
                         
     def initiate_check_buffer_thread(self):
@@ -75,7 +75,6 @@ class cap_rtsp():
     def reinitialize(self):
         self.lastFeedTime=None
         while(self.lock==True):
-            logger.info("waiting for thread lock to release")
             time.sleep(0.1)
         logger.info("Camera reinitialize called-{}".format(self.config['name']))
         self.lock=True
