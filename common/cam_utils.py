@@ -1,5 +1,7 @@
 import logging
+logging.basicConfig()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 logger.info("Loaded " + __name__)
 
 import cv2
@@ -31,17 +33,24 @@ class cap_rtsp():
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
         self.lastFeedTime=None
         self.enableCheckBuffer=self.config['params'].get('checkBufferThread', True)
+        self.lock=False
         if self.enableCheckBuffer:
             self.checkBufferInterval=self.config['params'].get('checkBufferInterval', 3)
             self.initiate_check_buffer_thread()
+        
        
         
     def check_maintain_buffer(self):
         while(self.checkBuffer):
-            logger.info("buffer check please!")
-            if self.lastFeedTime:
-                if(time.time()-self.lastFeedTime>self.checkBufferInterval):
-                    ret,frame=self.read()
+            if not self.lock:
+                self.lock=True
+                logger.info("camera buffer check please!")
+                if self.lastFeedTime:
+                    if(time.time()-self.lastFeedTime>self.checkBufferInterval):
+                        ret,frame=self.read()
+                self.lock=False
+            else:
+                logger.info("lock held..skipping buffer check")
             time.sleep(self.checkBufferInterval-1)
                         
     def initiate_check_buffer_thread(self):
@@ -64,7 +73,12 @@ class cap_rtsp():
             return 0,None
 
     def reinitialize(self):
-        logger.info("reinitialize called-{}".format(self.config['name']))
+        self.lastFeedTime=None
+        while(self.lock==True):
+            logger.info("waiting for thread lock to release")
+            time.sleep(0.1)
+        logger.info("Camera reinitialize called-{}".format(self.config['name']))
+        self.lock=True
         if self.enableCheckBuffer:
             self.checkBuffer = False
             self.checkBufferThread.join()
@@ -74,9 +88,14 @@ class cap_rtsp():
         #self.video = cv2.VideoCapture(0)
         if self.enableCheckBuffer:
             self.initiate_check_buffer_thread()
+        self.lock=False
         
 
     def clear(self):
+        self.config = None
+        self.source_FPS = None
+        self.FPS = None
+        self.SKIP = None
         self.video.release()
         
     def release(self):
