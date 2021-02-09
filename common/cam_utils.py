@@ -45,12 +45,12 @@ class cap_rtsp():
         while(self.checkBuffer):
             try:
                 if not self.lock:
-                    self.lock=True
+                    self.holdLock("buffercheck")
                     if self.lastFeedTime:
                         if(time.time()-self.lastFeedTime>self.checkBufferInterval):
                             logger.info("maintaing camera buffer-{}".format(self.config['name']))
                             ret,frame=self.read()
-                    self.lock=False
+                    self.clearLock("buffercheck")
                 else:
                     logger.info("lock held..skipping buffer check-{}".format(self.config['name']))
                 time.sleep(self.checkBufferInterval-1)
@@ -66,15 +66,23 @@ class cap_rtsp():
         
     def set(self,attribute,value):
         self.video.set(attribute,value)
+    
+    def holdLock(self,obj):
+        logger.info("lock held by -{}-{}".format(obj,self.config['name']))
+        self.lock=True
+        
+    def clearLock(self,obj):
+        logger.info("lock cleared by -{}-{}".format(obj,self.config['name']))
+        self.lock=False
 
     def read(self):
         if (self.video.isOpened()):
             while(self.lock==True):
-                logger.info("waiting for lock to clear")
+                logger.info("waiting for lock to clear-{}".format(self.config['name']))
                 time.sleep(0.1)
-            self.lock=True
+            self.holdLock("reader")
             frame= self.run()
-            self.lock=False
+            self.clearLock("reader")
             if frame is None:
                 return 0,None
             else:
@@ -89,7 +97,7 @@ class cap_rtsp():
             logger.info("waiting for lock to clear")
             time.sleep(0.1)
         logger.info("Camera reinitialize called-{}".format(self.config['name']))
-        self.lock=True
+        self.holdLock("reinitializer")
         if self.enableCheckBuffer:
             self.checkBuffer = False
             self.checkBufferThread.join()
@@ -99,7 +107,7 @@ class cap_rtsp():
         #self.video = cv2.VideoCapture(0)
         if self.enableCheckBuffer:
             self.initiate_check_buffer_thread()
-        self.lock=False
+        self.clearLock("reinitializer")
         
 
     def clear(self):
