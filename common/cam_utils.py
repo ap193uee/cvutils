@@ -32,7 +32,7 @@ class cap_rtsp():
         self.FPS = self.config['params'].get('fps', 5)
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
         self.lastFeedTime=None
-        self.enableCheckBuffer=self.config['params'].get('checkBufferThread', True)
+        self.enableCheckBuffer=self.config['params'].get('checkBufferThread', False)
         self.lock=False
         if self.enableCheckBuffer:
             self.checkBufferInterval=self.config['params'].get('checkBufferInterval', 3)
@@ -62,8 +62,12 @@ class cap_rtsp():
         self.video.set(attribute,value)
 
     def read(self):
+        self.lock=True
         if (self.video.isOpened()):
+            while(self.lock==True):
+                time.sleep(0.1)
             frame= self.run()
+            self.lock=False
             if frame is None:
                 return 0,None
             else:
@@ -107,7 +111,7 @@ class cap_rtsp():
             timeTaken = time.time()-self.lastFeedTime  
             fps=1.0/timeTaken
             self.SKIP = int(self.source_FPS/fps)+1
-            logger.info("fps obtained-{} ,skipping frames-{}".format(fps,self.SKIP))
+            #logger.info("fps obtained-{} ,skipping frames-{}".format(fps,self.SKIP))
             self.lastFeedTime=time.time()
         else:
             self.lastFeedTime=time.time()
@@ -125,7 +129,7 @@ class cap_rtsp():
                 if not skip:
                     ret, frame = self.video.retrieve()
                     if ret==1 :
-                        logger.info("time taken to grab frame-{}".format(time.time()-start))
+                        #logger.info("time taken to grab frame-{}".format(time.time()-start))
                         self.lastFeedTime=time.time()
                         return frame            
         return None
