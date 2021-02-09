@@ -62,10 +62,10 @@ class cap_rtsp():
         self.video.set(attribute,value)
 
     def read(self):
-        self.lock=True
         if (self.video.isOpened()):
             while(self.lock==True):
                 time.sleep(0.1)
+            self.lock=True
             frame= self.run()
             self.lock=False
             if frame is None:
