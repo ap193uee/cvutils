@@ -68,21 +68,21 @@ class cap_rtsp():
         self.video.set(attribute,value)
     
     def holdLock(self,obj):
-        logger.info("lock held by -{}-{}".format(obj,self.config['name']))
+        #logger.info("lock held by -{}-{}".format(obj,self.config['name']))
         self.lock=True
         
     def clearLock(self,obj):
-        logger.info("lock cleared by -{}-{}".format(obj,self.config['name']))
+        #logger.info("lock cleared by -{}-{}".format(obj,self.config['name']))
         self.lock=False
 
     def read(self):
         while(self.lock==True):
             logger.info("waiting for lock to clear-{}".format(self.config['name']))
-                time.sleep(0.1)
+            time.sleep(0.1)
         self.holdLock("reader")
         if (self.video.isOpened()):     
             frame= self.run()
-             self.clearLock("reader")
+            self.clearLock("reader")
             if frame is None:
                 return 0,None
             else:
