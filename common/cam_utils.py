@@ -45,12 +45,12 @@ class cap_rtsp():
         while(self.checkBuffer):
             try:
                 if not self.lock:
-                    self.holdLock("buffercheck")
+                    #self.holdLock("buffercheck")
                     if self.lastFeedTime:
                         if(time.time()-self.lastFeedTime>self.checkBufferInterval):
                             logger.info("maintaing camera buffer-{}".format(self.config['name']))
                             ret,frame=self.read()
-                    self.clearLock("buffercheck")
+                    #self.clearLock("buffercheck")
                 else:
                     logger.info("lock held..skipping buffer check-{}".format(self.config['name']))
                 time.sleep(self.checkBufferInterval-1)
@@ -76,18 +76,19 @@ class cap_rtsp():
         self.lock=False
 
     def read(self):
-        if (self.video.isOpened()):
-            while(self.lock==True):
-                logger.info("waiting for lock to clear-{}".format(self.config['name']))
+        while(self.lock==True):
+            logger.info("waiting for lock to clear-{}".format(self.config['name']))
                 time.sleep(0.1)
-            self.holdLock("reader")
+        self.holdLock("reader")
+        if (self.video.isOpened()):     
             frame= self.run()
-            self.clearLock("reader")
+             self.clearLock("reader")
             if frame is None:
                 return 0,None
             else:
                 return 1,frame
         else:
+            self.clearLock("reader")
             logger.info('camera capture object not opened for camera {} ,url{}'.format(self.config['name'],self.config['url']))
             return 0,None
 
