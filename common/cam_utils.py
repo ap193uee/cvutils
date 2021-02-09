@@ -10,6 +10,7 @@ import urllib
 import base64
 import time
 import threading
+import traceback
 
 # RTSP based capture
 class cap_rtsp():
@@ -42,16 +43,21 @@ class cap_rtsp():
         
     def check_maintain_buffer(self):
         while(self.checkBuffer):
-            if not self.lock:
-                self.lock=True
-                if self.lastFeedTime:
-                    if(time.time()-self.lastFeedTime>self.checkBufferInterval):
-                        logger.info("maintaing camera buffer-{}".format(self.config['name']))
-                        ret,frame=self.read()
-                self.lock=False
-            else:
-                logger.info("lock held..skipping buffer check-{}".format(self.config['name']))
-            time.sleep(self.checkBufferInterval-1)
+            try:
+                if not self.lock:
+                    self.lock=True
+                    if self.lastFeedTime:
+                        if(time.time()-self.lastFeedTime>self.checkBufferInterval):
+                            logger.info("maintaing camera buffer-{}".format(self.config['name']))
+                            ret,frame=self.read()
+                    self.lock=False
+                else:
+                    logger.info("lock held..skipping buffer check-{}".format(self.config['name']))
+                time.sleep(self.checkBufferInterval-1)
+            except Exception as e:
+                logger.info("some exception occurred in buffercheck-{}".format(str(e)))
+                logger.info(traceback.format_exc())
+                
                         
     def initiate_check_buffer_thread(self):
         self.checkBuffer = True
