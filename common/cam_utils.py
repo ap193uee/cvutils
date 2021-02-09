@@ -70,6 +70,7 @@ class cap_rtsp():
     def read(self):
         if (self.video.isOpened()):
             while(self.lock==True):
+                logger.info("waiting for lock to clear")
                 time.sleep(0.1)
             self.lock=True
             frame= self.run()
@@ -85,6 +86,7 @@ class cap_rtsp():
     def reinitialize(self):
         self.lastFeedTime=None
         while(self.lock==True):
+            logger.info("waiting for lock to clear")
             time.sleep(0.1)
         logger.info("Camera reinitialize called-{}".format(self.config['name']))
         self.lock=True
