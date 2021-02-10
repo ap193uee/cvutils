@@ -24,13 +24,16 @@ class cap_rtsp():
         if username and password and(self.config['url'].find('@')==-1):
             url=self.config['url'][0:7]+username+':'+password+'@'+self.config['url'][7:]
             self.config['url']=url
-        self.video = cv2.VideoCapture(self.config['url'])
+       
         #self.video = cv2.VideoCapture(0)
         params = self.config.get('params',{})
         self.config['params']=params
+        self.backend = self.config['params'].get('backend', cv2.CAP_FFMPEG)
+        self.video = cv2.VideoCapture(self.config['url'],self.backend)
         self.source_FPS = self.config['params'].get('source_fps', int(self.video.get(cv2.CAP_PROP_FPS)))
         print("fps of camera-{}".format(self.source_FPS))
         self.FPS = self.config['params'].get('fps', 5)
+        
         self.SKIP = int(self.source_FPS/self.FPS) if self.source_FPS and self.FPS else 1
         self.lastFeedTime=None
         self.enableCheckBuffer=self.config['params'].get('checkBufferThread', False)
@@ -104,7 +107,7 @@ class cap_rtsp():
             self.checkBufferThread.join()
         self.video.release()
         self.video=None
-        self.video = cv2.VideoCapture(self.config['url'])
+        self.video = cv2.VideoCapture(self.config['url'],self.backend)
         #self.video = cv2.VideoCapture(0)
         if self.enableCheckBuffer:
             self.initiate_check_buffer_thread()
