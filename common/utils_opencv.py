@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -73,10 +73,19 @@ def showImage(imgcv, window='Image'):
 
 def resizeImg(imgcv, size, keepAspect=False, padding=False):
     """ Resize the input image to given size.
-    imgcv       -- input source image
-    size        -- (w,h) of desired resized image
-    keepAspect  -- to preserve aspect ratio during resize
-    padding     -- to add black padding when target aspect is different
+    
+    :param imgcv: input source image
+    :type imgcv: numpy.array
+    :param size: (w,h) of desired resized image
+    :type size: tuple
+    :param keepAspect: to preserve aspect ratio during resize,
+        defaults to False
+    :type keepAspect: bool, optional
+    :param padding: to add black padding when target aspect is different, 
+        defaults to False
+    :type padding: bool, optional
+    :return: rotated image of desired size
+    :rtype: numpy.array
     """
     dtype = imgcv.dtype
     outW, outH = size
@@ -131,10 +140,17 @@ def subImage(imgcv, bbox, padding=20, padding_type='percentage'):
 
 
 def rotateImg(imgcv, angle, crop=False):
-    """ Rotate an image counter-clockwise by given angle with or without cropping.
-        imgcv   -- input source image
-        angle   -- angle in degrees to ratate the imgcv to
-        crop    -- to change/preserve the size while rotating
+    """ Rotate an image counter-clockwise by given angle with or 
+    without cropping.
+    
+    :param imgcv: input source image
+    :type imgcv: numpy.array
+    :param angle: angle in degrees to ratate the imgcv to
+    :type angle: float
+    :param crop: to change/preserve the size while rotating, defaults to False
+    :type crop: bool, optional
+    :return: output rotated image
+    :rtype: numpy.array
     """
     h, w = imgcv.shape[:2]
     centre = (imgcv.shape[1]/2, imgcv.shape[0]/2)
@@ -169,6 +185,45 @@ def adjust_gamma(imgcv, gamma=1.0):
     
 	# apply gamma correction using the lookup table
 	return cv2.LUT(imgcv, table)
+
+
+def det_hough_lines(img_bin):
+    """
+    Detects straight lines in a given image and return a list of
+    their coordinates.
+
+    :param img_bin: binary (thresholded) image with lines in white
+    :type img_bin: numpy.ndarray
+    :returns: list of lines detected of format (x1, y1, x2, y2)
+
+    .. todo:: return vertical and other lines separately
+    """
+    min_line_length_x = 100
+    min_line_length_y = 100
+    min_line_length = max(min_line_length_x, min_line_length_y)
+
+    # Find verticals lines separately (because it gives better results)
+    linesV = cv2.HoughLinesP(img_bin, 1, pi, 100,
+                             min_line_length, 2)
+    if linesV is not None:
+        linesV = [line[0].tolist() for line in linesV]
+        linesV = [line for line in linesV if
+                abs(line[3] - line[1]) > min_line_length_y]
+    else:
+        linesV = []
+
+    # Find the lines at other angles
+    lines = cv2.HoughLinesP(img_bin, 1, pi/2, 100,
+                            min_line_length, 2)
+    if lines is not None:
+        lines = [line[0].tolist() for line in lines]
+        lines = [line for line in lines if
+                abs(line[3] - line[1]) > min_line_length_y or
+                abs(line[2] - line[0]) > min_line_length_x]
+    else:
+        lines = []
+    # logger.debug("Number of lines detected: %d", len(lines + linesV))
+    return lines + linesV
 
 
 def drawLabel(imgcv, text, topleft,

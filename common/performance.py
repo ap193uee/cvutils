@@ -1,4 +1,9 @@
+#!/usr/bin/env python3
+
 class Multicore(object):
+    """ To convert a single core function into multicore function using the
+    python's multiprocessing module.
+    """
     def __init__(self, func):
         from multiprocessing import Pool, cpu_count
         from collections import deque
